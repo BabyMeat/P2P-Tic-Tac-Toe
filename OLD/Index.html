@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tic-Tac-Toe Multijoueur</title>
+  <style>
+    /* Styles pour le plateau de jeu */
+    .board { display: grid; grid-template-columns: repeat(3, 100px); grid-gap: 5px; }
+    .cell { width: 100px; height: 100px; text-align: center; font-size: 2em; line-height: 100px; border: 1px solid #000; cursor: pointer; }
+    #room-id { margin-top: 20px; }
+  </style>
+</head>
+<body>
+  <h1>Tic-Tac-Toe Multijoueur</h1>
+  <div id="room-id">Votre ID de salle : <span></span></div>
+  <div id="game-container">
+    <div id="board" class="board">
+      <!-- Grille du jeu -->
+      <div class="cell" data-cell="0"></div>
+      <div class="cell" data-cell="1"></div>
+      <div class="cell" data-cell="2"></div>
+      <div class="cell" data-cell="3"></div>
+      <div class="cell" data-cell="4"></div>
+      <div class="cell" data-cell="5"></div>
+      <div class="cell" data-cell="6"></div>
+      <div class="cell" data-cell="7"></div>
+      <div class="cell" data-cell="8"></div>
+    </div>
+    <button id="host-btn">Créer une salle (Host)</button>
+    <input type="text" id="room-id-input" placeholder="Entrez un ID de salle pour rejoindre" />
+    <button id="join-btn">Rejoindre la salle</button>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/peerjs@1.4.7/dist/peer.min.js"></script>
+  <script>
+    // Initialisation des variables
+    let peer = null;
+    let conn = null;
+    let currentPlayer = 'X';
+    let gameBoard = Array(9).fill(null);
+
+    const board = document.getElementById('board');
+    const hostButton = document.getElementById('host-btn');
+    const joinButton = document.getElementById('join-btn');
+    const roomIdDisplay = document.getElementById('room-id').querySelector('span');
+    const roomIdInput = document.getElementById('room-id-input');
+
+    // Créer une connexion Peer pour l'hôte
+    hostButton.addEventListener('click', () => {
+      peer = new Peer();
+      peer.on('open', (id) => {
+        roomIdDisplay.textContent = id;
+      });
+
+      // Créer une connexion Peer pour les invités
+      peer.on('connection', (connection) => {
+        conn = connection;
+        setupConnection();
+      });
+
+      peer.on('error', (err) => console.error('Erreur Peer:', err));
+    });
+
+    // Joindre la salle
+    joinButton.addEventListener('click', () => {
+      const roomId = roomIdInput.value.trim();
+      if (!roomId) return alert('Veuillez entrer un ID de salle valide.');
+      
+      peer = new Peer();
+      peer.on('open', () => {
+        conn = peer.connect(roomId);
+        setupConnection();
+      });
+      peer.on('error', (err) => console.error('Erreur Peer:', err));
+    });
+
+    // Configuration de la connexion
+    function setupConnection() {
+      conn.on('open', () => {
+        console.log('Connecté à l\'hôte');
+      });
+
+      conn.on('data', (data) => {
+        updateGameBoard(data.board);
+        switchPlayer();
+      });
+
+      // Gestion des clics sur le plateau de jeu
+      board.addEventListener('click', (e) => {
+        const cell = e.target;
+        if (cell.classList.contains('cell') && !cell.textContent && currentPlayer === 'X') {
+          const index = cell.getAttribute('data-cell');
+          gameBoard[index] = currentPlayer;
+          cell.textContent = currentPlayer;
+          sendBoardUpdate();
+          switchPlayer();
+        }
+      });
+    }
+
+    // Envoyer les mises à jour du plateau aux autres joueurs
+    function sendBoardUpdate() {
+      if (conn) {
+        conn.send({ board: gameBoard });
+      }
+    }
+
+    // Mettre à jour le plateau de jeu
+    function updateGameBoard(boardData) {
+      boardData.forEach((value, index) => {
+        const cell = board.querySelector(`.cell[data-cell="${index}"]`);
+        if (value) {
+          cell.textContent = value;
+        }
+      });
+    }
+
+    // Alterner les joueurs
+    function switchPlayer() {
+      currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
+    }
+  </script>
+</body>
+</html>

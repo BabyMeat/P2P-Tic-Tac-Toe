@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>P2P Example</title>
+</head>
+<body>
+  <h1>Peer-to-Peer Connection</h1>
+  <button id="host-btn">Créer une salle</button>
+  <button id="join-btn">Rejoindre une salle</button>
+  <input id="room-id-input" placeholder="ID de la salle" />
+  <div id="status"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/peerjs@1.4.7/dist/peer.min.js"></script>
+  <script>
+    let peer;
+    let conn;
+
+    const hostBtn = document.getElementById('host-btn');
+    const joinBtn = document.getElementById('join-btn');
+    const roomIdInput = document.getElementById('room-id-input');
+    const statusDiv = document.getElementById('status');
+
+    // Créer une salle
+    hostBtn.addEventListener('click', () => {
+      peer = new Peer(); // Crée un Peer unique
+      peer.on('open', (id) => {
+        statusDiv.textContent = `ID de la salle : ${id}`;
+      });
+
+      peer.on('connection', (connection) => {
+        conn = connection;
+        conn.on('data', (data) => {
+          console.log('Message reçu:', data);
+          statusDiv.textContent = `Message reçu : ${data}`;
+        });
+      });
+    });
+
+    // Rejoindre une salle
+    joinBtn.addEventListener('click', () => {
+      const roomId = roomIdInput.value.trim();
+      if (!roomId) return alert('Veuillez entrer un ID de salle.');
+
+      peer = new Peer();
+      conn = peer.connect(roomId);
+
+      conn.on('open', () => {
+        conn.send('Bonjour depuis l’invité !');
+        statusDiv.textContent = 'Connecté à l’hôte !';
+      });
+
+      conn.on('data', (data) => {
+        console.log('Message reçu:', data);
+        statusDiv.textContent = `Message reçu : ${data}`;
+      });
+    });
+  </script>
+</body>
+</html>
