@@ -4,6 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>P2P Example</title>
+  <!-- Charge la bibliothèque PeerJS -->
+  <script src="https://cdn.jsdelivr.net/npm/peerjs@1.4.7/dist/peer.min.js"></script>
 </head>
 <body>
   <h1>Peer-to-Peer Connection</h1>
@@ -12,7 +14,7 @@
   <input id="room-id-input" placeholder="ID de la salle" />
   <div id="status"></div>
 
-  <script src="https://cdn.jsdelivr.net/npm/peerjs@1.4.7/dist/peer.min.js"></script>
+  <!-- Script principal -->
   <script>
     let peer;
     let conn;
